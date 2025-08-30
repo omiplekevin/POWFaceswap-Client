@@ -83,17 +83,6 @@ fun ViewerView(
 						viewerModel.getRecentResults()
 					}) { Text("Refresh") }
 					
-					OutlinedTextField(
-						value = printTextFieldValue,
-						modifier = Modifier
-							.weight(1f),
-						onValueChange = {
-							printTextFieldValue = it
-						},
-						shape = RoundedCornerShape(12.dp),
-						singleLine = true,
-						label = { Text("Copies") }
-					)
 					Button(onClick = {
 //						scope.launch {
 //							snackbarHostState.showSnackbar("Printing... <install printer service>")
