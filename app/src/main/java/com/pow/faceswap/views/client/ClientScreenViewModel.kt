@@ -24,18 +24,63 @@ object ClientScreenViewModel : ViewModel() {
 	private val _clientState = MutableStateFlow(ClientScreenState())
 	val clientState: StateFlow<ClientScreenState> = _clientState.asStateFlow()
 	
-	fun setCapturedImagePathAndHeadCount(path: Uri?, count: Int) {
+	fun setHeadcount(headCount: Int) {
 		_clientState.update { currentState ->
 			currentState.copy(
-				capturedImagePath = path,
-				headCount = count
+				headCount = headCount
 			)
 		}
 	}
 	
-	fun performSwap(capturedImage: File, numHeads: Int) {
+	fun setCapturedImagePath(path: Uri?) {
+		_clientState.update { currentState ->
+			currentState.copy(
+				capturedImagePath = path
+			)
+		}
+	}
+	
+	fun setReferenceFile(referenceFile: String) {
+		_clientState.update { currentState ->
+			currentState.copy(
+				referenceFile = referenceFile
+			)
+		}
+	}
+	
+	fun getServerFileTree() {
 		viewModelScope.launch {
-			restApiFlow.performSwap(capturedImage, numHeads)
+			restApiFlow.getServerFileTree()
+				.flowOn(Dispatchers.IO)
+				.onStart {
+					_clientState.update { currentState ->
+						currentState.copy(isLoading = true)
+					}
+				}
+				.onCompletion { 
+					_clientState.update { 
+						currentState -> 
+						currentState.copy(isLoading = false)
+					}
+				}
+				.catch { 
+					_clientState.update { 
+						currentState -> 
+						currentState.copy(errMessage = it.message ?: "Uh oh! Something went wrong!")
+					}
+				}
+				.collect { 
+					_clientState.update { 
+						currentState -> 
+						currentState.copy(serverFileTree = it.body(), errMessage = null)
+					}
+				}
+		}
+	}
+	
+	fun performSwap(capturedImage: File, numHeads: Int, referenceFile: String) {
+		viewModelScope.launch {
+			restApiFlow.performSwap(capturedImage, numHeads, referenceFile)
 				.flowOn(Dispatchers.IO)
 				.onStart {
 					_clientState.update { currentState ->

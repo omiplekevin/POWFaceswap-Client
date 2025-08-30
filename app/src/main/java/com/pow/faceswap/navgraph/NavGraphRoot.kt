@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.pow.faceswap.views.client.ClientGalleryView
 import com.pow.faceswap.views.client.ClientImagePreviewView
 import com.pow.faceswap.views.client.ClientScreen
 import com.pow.faceswap.views.selector.ScreenSelectorView
@@ -15,6 +16,7 @@ sealed class RootScreens(val path: String) {
 	data object ScreenSelect : RootScreens(path = "screen_select")
 	data object Client : RootScreens(path = "client")
 	data object ClientImagePreview : RootScreens(path = "client_image_preview")
+	data object ClientGalleryView : RootScreens(path = "client_gallery")
 	data object Viewer : RootScreens(path = "viewer")
 }
 
@@ -39,6 +41,9 @@ fun NavGraphRoot(navGraphController: NavHostController) {
 				navigateUp = {
 					navGraphController.popBackStack()
 				},
+				onHeadCountSelected = {
+					navGraphController.navigate(RootScreens.ClientGalleryView.path)
+				},
 				onImagePreview = {
 					//change to image preview screen
 					navGraphController.navigate(RootScreens.ClientImagePreview.path)
@@ -47,6 +52,15 @@ fun NavGraphRoot(navGraphController: NavHostController) {
 		
 		composable(route = RootScreens.ClientImagePreview.path) {
 			ClientImagePreviewView(
+				modifier = Modifier,
+				navigateUp = {
+					navGraphController.popBackStack()
+				}
+			)
+		}
+		
+		composable(route = RootScreens.ClientGalleryView.path) {
+			ClientGalleryView(
 				modifier = Modifier,
 				navigateUp = {
 					navGraphController.popBackStack()

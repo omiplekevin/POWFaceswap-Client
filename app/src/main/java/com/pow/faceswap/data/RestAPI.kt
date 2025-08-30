@@ -15,9 +15,16 @@ interface RestAPI {
 	@POST("/swap")
 	suspend fun swapFaces(
 		@Part target: MultipartBody.Part,
-		@Part("num_heads") numHeads: RequestBody
+		@Part("num_heads") numHeads: RequestBody,
+		@Part("reference_file") referenceFile: RequestBody,
 	): Response<SwapResponse>
 	
 	@GET("/latest-folder")
 	suspend fun getRecentResult(): Response<RecentResultsResponse>
+	
+	@GET("/list-references")
+	suspend fun getServerFileTree(): Response<ServerFileTree>
+	
+	@GET("/print-latest-pdf")
+	suspend fun printLatestOutput(): Response<String>
 }

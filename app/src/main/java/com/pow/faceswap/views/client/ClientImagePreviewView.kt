@@ -83,9 +83,11 @@ fun ClientImagePreviewView(
 				Button(onClick = {
 					val resolvedFile = clientState.capturedImagePath?.toRelativePath(context) ?: ""
 					val headCount = clientState.headCount
+					val referenceFile = clientState.referenceFile ?: ""
 					viewModel.performSwap(
 						getFileFromRelativePath(context, resolvedFile) ?: File(""),
-						headCount
+						headCount,
+						referenceFile
 					)
 				}) {
 					Text("Done")

@@ -1,5 +1,6 @@
 package com.pow.faceswap.views.viewer
 
+import android.util.Log
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okhttp3.Dispatcher
 
 object ViewerViewModel : ViewModel() {
 	
@@ -58,6 +60,23 @@ object ViewerViewModel : ViewModel() {
 						)
 					}
 				}
+		}
+	}
+	
+	fun printRecentOutput() {
+		viewModelScope.launch { 
+			restAPIFlow.printRecentOutput()
+				.flowOn(Dispatchers.IO)
+				.onStart { 
+					_viewerState.update { currentState -> currentState.copy(isLoading = true, isPrinting = true) }
+				}
+				.onCompletion { 
+					_viewerState.update { currentState -> currentState.copy(isLoading = false, isPrinting = false) }
+				}
+				.catch { 
+					_viewerState.update { currentState -> currentState.copy(errMessage = it.message ?: "") }
+				}
+				.collect { Log.d("PRINT_ACTION", "${it.body()}")}
 		}
 	}
 	

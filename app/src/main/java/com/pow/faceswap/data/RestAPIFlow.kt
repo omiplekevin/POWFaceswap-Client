@@ -11,17 +11,27 @@ import java.io.File
 
 class RestAPIFlow {
 	
-	suspend fun performSwap(targetFile: File, headCount: Int): Flow<Response<SwapResponse>> =
+	suspend fun getServerFileTree(): Flow<Response<ServerFileTree>> =
+		flow {
+			emit(
+				RetrofitInstance()
+					.restApi
+					.getServerFileTree()
+			)
+		}
+	
+	suspend fun performSwap(targetFile: File, headCount: Int, referenceFile: String): Flow<Response<SwapResponse>> =
 		flow {
 			val requestFile = targetFile.asRequestBody("image/*".toMediaTypeOrNull())
 			val targetPart = MultipartBody.Part.createFormData("target", targetFile.name, requestFile)
 			
 			val numHeadsPart = headCount.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+			val refFile = referenceFile.toString().toRequestBody("text/plain".toMediaTypeOrNull())
 			
 			emit(
 				RetrofitInstance()
 					.restApi
-					.swapFaces(targetPart, numHeadsPart)
+					.swapFaces(targetPart, numHeadsPart, refFile)
 			)
 		}
 	
@@ -31,6 +41,15 @@ class RestAPIFlow {
 				RetrofitInstance()
 					.restApi
 					.getRecentResult()
+			)
+		}
+	
+	suspend fun printRecentOutput(): Flow<Response<String>> =
+		flow { 
+			emit(
+				RetrofitInstance()
+					.restApi
+					.printLatestOutput()
 			)
 		}
 }

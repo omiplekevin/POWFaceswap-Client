@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +45,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
+import com.pow.faceswap.MainActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,8 +54,16 @@ fun ClientScreen(
 	title: String,
 	navigateUp: () -> Unit,
 	onImagePreview: () -> Unit,
+	onHeadCountSelected: () -> Unit,
 	viewModel: ClientScreenViewModel = viewModel(),
 ) {
+	
+	val clientState by viewModel.clientState.collectAsState()
+	
+	LaunchedEffect(clientState.serverFileTree) {
+		viewModel.getServerFileTree()
+	}
+	
 	Scaffold(topBar = {
 		TopAppBar(title = {
 			Text(title)
@@ -63,23 +73,36 @@ fun ClientScreen(
 			}
 		})
 	}) { paddingValues ->
-		Column(modifier = Modifier.padding(paddingValues)) {
-			CameraPreviewScreen(
-				modifier
-					.background(color = Color(255, 0, 0, 1)), onPhotoCaptured = { photoRelativePath, headCount ->
-					viewModel.setCapturedImagePathAndHeadCount(photoRelativePath, headCount)
-					onImagePreview()
-				})
+		if (!clientState.isLoading) {
+			if (clientState.errMessage == null) {
+				Column(modifier = Modifier.padding(paddingValues)) {
+					CameraPreviewScreen(
+						modifier
+							.background(color = Color(255, 0, 0, 1)),
+						onHeadCountSelected = { headCount ->
+							viewModel.setHeadcount(headCount)
+							onHeadCountSelected()
+						},
+						onPhotoCaptured = { photoRelativePath, headCount ->
+							viewModel.setCapturedImagePath(photoRelativePath)
+							onImagePreview()
+						})
+				}
+			} else {
+				Text("Server not found @ ${MainActivity._SERVER_IP}!")
+			}
+		} else {
+			Text("Contacting local server @ ${MainActivity._SERVER_IP}!")
 		}
 	}
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun CameraPreviewScreen(modifier: Modifier = Modifier, onPhotoCaptured: (Uri?, Int) -> Unit) {
+fun CameraPreviewScreen(modifier: Modifier = Modifier, onHeadCountSelected: (Int) -> Unit, onPhotoCaptured: (Uri?, Int) -> Unit) {
 	val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
 	if (cameraPermissionState.status.isGranted) {
-		CameraPreviewContent(onPhotoCaptured = onPhotoCaptured)
+		CameraPreviewContent(onPhotoCaptured = onPhotoCaptured, onHeadCountSelected = onHeadCountSelected)
 	} else {
 		Column(
 			modifier = modifier
@@ -108,16 +131,19 @@ fun CameraPreviewScreen(modifier: Modifier = Modifier, onPhotoCaptured: (Uri?, I
 @Composable
 fun CameraPreviewContent(
 	modifier: Modifier = Modifier,
-	viewModel: CameraViewModel = viewModel(),
+	cameraViewModel: CameraViewModel = viewModel(),
+	clientViewModel: ClientScreenViewModel = viewModel(),
 	lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
+	onHeadCountSelected: (Int) -> Unit,
 	onPhotoCaptured: (Uri?, Int) -> Unit,
 ) {
-	val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
+	val surfaceRequest by cameraViewModel.surfaceRequest.collectAsStateWithLifecycle()
 	val context = LocalContext.current
-	var checkedIndex by remember { mutableIntStateOf(-1) }
+	val clientState by clientViewModel.clientState.collectAsState()
+	var checkedIndex by remember { mutableIntStateOf(clientState.headCount) }
 	
 	LaunchedEffect(lifecycleOwner) {
-		viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
+		cameraViewModel.bindToCamera(context.applicationContext, lifecycleOwner)
 	}
 	
 	Box(modifier = modifier.background(color = Color(255, 0, 0, 1))) {
@@ -140,9 +166,12 @@ fun CameraPreviewContent(
 						verticalAlignment = Alignment.CenterVertically
 					) {
 						Checkbox(
-							checked = checkedIndex == index, onCheckedChange = {
+							checked = checkedIndex == index,
+							onCheckedChange = {
 								checkedIndex = if (checkedIndex == index) -1 else index
-							})
+								onHeadCountSelected(index)
+							}
+						)
 						Text(text = "$index face${if (index > 1) "s" else ""}")
 					}
 				}
@@ -156,7 +185,7 @@ fun CameraPreviewContent(
 			}            // Capture Button
 			Button(
 				enabled = (checkedIndex != -1), onClick = {
-					viewModel.takePhoto(context) { path ->
+					cameraViewModel.takePhoto(context) { path ->
 						onPhotoCaptured(path, checkedIndex)
 					}
 				}, modifier = Modifier.padding(16.dp)

@@ -28,12 +28,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,8 +48,7 @@ fun ViewerView(
 ) {
 	
 	val viewerState by viewerModel.viewerState.collectAsState()
-	val printTextFieldValue =
-		remember { mutableStateOf(TextFieldValue("1")) }
+	var printTextFieldValue by remember { mutableStateOf("") }
 	val snackbarHostState = remember { SnackbarHostState() }
 	val scope = rememberCoroutineScope()
 	
@@ -80,61 +77,28 @@ fun ViewerView(
 						model = viewerState.recentResult?.files[0],
 						contentDescription = null,
 					)
-					AsyncImage(
-						model = viewerState.recentResult?.files[1],
-						contentDescription = null,
-					)
-					AsyncImage(
-						model = viewerState.recentResult?.files[2],
-						contentDescription = null,
-					)
 				}
-				Text("response: ${viewerState.recentResult.toString()}")
 				Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 					Button(onClick = {
 						viewerModel.getRecentResults()
 					}) { Text("Refresh") }
 					
 					OutlinedTextField(
-						value = printTextFieldValue.value,
+						value = printTextFieldValue,
 						modifier = Modifier
-							.weight(1f)
-							.onFocusChanged { state ->
-								if (state.hasFocus) {
-									printTextFieldValue.value = printTextFieldValue.value.copy(
-										selection = TextRange(
-											0,
-											printTextFieldValue.value.text.length
-										)
-									)
-								}
-							},
+							.weight(1f),
 						onValueChange = {
-							printTextFieldValue.value = it
+							printTextFieldValue = it
 						},
 						shape = RoundedCornerShape(12.dp),
 						singleLine = true,
-						colors = OutlinedTextFieldDefaults.colors(
-							cursorColor = Color.Black,
-							focusedBorderColor = Color.Black,
-							unfocusedBorderColor = Color.Black,
-						),
-						placeholder = {
-							Text(
-								text = "Enter your text",
-								modifier = Modifier
-									.fillMaxWidth(0.5f),
-								style = TextStyle(
-									fontSize = 14.sp,
-									color = Color.LightGray
-								)
-							)
-						},
+						label = { Text("Copies") }
 					)
 					Button(onClick = {
-						scope.launch {
-							snackbarHostState.showSnackbar("Printing... <install printer service>")
-						}
+//						scope.launch {
+//							snackbarHostState.showSnackbar("Printing... <install printer service>")
+//						}
+						viewerModel.printRecentOutput()
 					}) {
 						Text("Print")
 					}

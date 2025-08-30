@@ -11,6 +11,10 @@ import com.pow.faceswap.navgraph.NavGraphRoot
 
 class MainActivity : ComponentActivity() {
 	
+	companion object {
+		var _SERVER_IP: String = ""
+	}
+	
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()

@@ -1,5 +1,6 @@
 package com.pow.faceswap.data
 
+import com.pow.faceswap.MainActivity
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -12,7 +13,7 @@ class RetrofitInstance {
 		getInstance().create(RestAPI::class.java)
 	}
 	
-	private val BASE_URL = "http://192.168.1.12:8080/"
+	private val BASE_URL = "http://${MainActivity._SERVER_IP}/"
 	
 	private fun getInstance(): Retrofit {
 		val interceptor = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
