@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">POWFaceswap</string>
+    <string name="client_title">Client</string>
+    <string name="viewer_title">Viewer</string>
+</resources>

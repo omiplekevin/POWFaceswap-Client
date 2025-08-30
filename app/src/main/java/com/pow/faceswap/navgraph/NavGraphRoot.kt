@@ -1,0 +1,66 @@
+package com.pow.faceswap.navgraph
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import com.pow.faceswap.views.client.ClientImagePreviewView
+import com.pow.faceswap.views.client.ClientScreen
+import com.pow.faceswap.views.selector.ScreenSelectorView
+import com.pow.faceswap.views.viewer.ViewerView
+
+sealed class RootScreens(val path: String) {
+	data object Root : RootScreens(path = "root")
+	data object ScreenSelect : RootScreens(path = "screen_select")
+	data object Client : RootScreens(path = "client")
+	data object ClientImagePreview : RootScreens(path = "client_image_preview")
+	data object Viewer : RootScreens(path = "viewer")
+}
+
+@Composable
+fun NavGraphRoot(navGraphController: NavHostController) {
+	NavHost(
+		navController = navGraphController, route = RootScreens.Root.path, startDestination = RootScreens.ScreenSelect.path
+	) {
+		composable(route = RootScreens.ScreenSelect.path) {
+			ScreenSelectorView(Modifier, onScreenSelected = { screenPath, screenTitle ->
+				it.savedStateHandle.apply {
+					set("title", screenTitle)
+				}
+				navGraphController.navigate(screenPath)
+			})
+		}
+		
+		composable(route = RootScreens.Client.path) {
+			ClientScreen(
+				modifier = Modifier,
+				title = navGraphController.previousBackStackEntry?.savedStateHandle?.get<String>("title") ?: "",
+				navigateUp = {
+					navGraphController.popBackStack()
+				},
+				onImagePreview = {
+					//change to image preview screen
+					navGraphController.navigate(RootScreens.ClientImagePreview.path)
+				})
+		}
+		
+		composable(route = RootScreens.ClientImagePreview.path) {
+			ClientImagePreviewView(
+				modifier = Modifier,
+				navigateUp = {
+					navGraphController.popBackStack()
+				}
+			)
+		}
+		
+		composable(route = RootScreens.Viewer.path) {
+			ViewerView(
+				modifier = Modifier,
+				title = navGraphController.previousBackStackEntry?.savedStateHandle?.get<String>("title") ?: "",
+				navigateUp = {
+					navGraphController.popBackStack()
+				})
+		}
+	}
+}
