@@ -1,10 +1,8 @@
 package com.pow.faceswap.views.viewer
 
 import android.util.Log
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pow.faceswap.data.RecentResultsResponse
 import com.pow.faceswap.data.RestAPIFlow
 import com.pow.faceswap.views.viewer.state.ViewerState
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +15,6 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import okhttp3.Dispatcher
 
 object ViewerViewModel : ViewModel() {
 	
@@ -27,10 +24,10 @@ object ViewerViewModel : ViewModel() {
 	val viewerState: StateFlow<ViewerState> = _viewerState.asStateFlow()
 	
 	fun getRecentResults() {
-		viewModelScope.launch { 
+		viewModelScope.launch {
 			restAPIFlow.getRecentResults()
 				.flowOn(Dispatchers.IO)
-				.onStart { 
+				.onStart {
 					_viewerState.update { currentState ->
 						currentState.copy(
 							isLoading = true,
@@ -38,21 +35,21 @@ object ViewerViewModel : ViewModel() {
 						)
 					}
 				}
-				.onCompletion { 
+				.onCompletion {
 					_viewerState.update { currentState ->
 						currentState.copy(
 							isLoading = false
 						)
 					}
 				}
-				.catch { 
-					_viewerState.update {currentState -> 
+				.catch {
+					_viewerState.update { currentState ->
 						currentState.copy(
 							errMessage = it.message
 						)
 					}
 				}
-				.collect { 
+				.collect {
 					_viewerState.update { currentState ->
 						currentState.copy(
 							recentResult = it.body(),
@@ -64,20 +61,26 @@ object ViewerViewModel : ViewModel() {
 	}
 	
 	fun printRecentOutput() {
-		viewModelScope.launch { 
+		viewModelScope.launch {
 			restAPIFlow.printRecentOutput()
 				.flowOn(Dispatchers.IO)
-				.onStart { 
+				.onStart {
 					_viewerState.update { currentState -> currentState.copy(isLoading = true, isPrinting = true) }
 				}
-				.onCompletion { 
+				.onCompletion {
 					_viewerState.update { currentState -> currentState.copy(isLoading = false, isPrinting = false) }
 				}
-				.catch { 
+				.catch {
 					_viewerState.update { currentState -> currentState.copy(errMessage = it.message ?: "") }
 				}
-				.collect { Log.d("PRINT_ACTION", "${it.body()}")}
+				.collect { Log.d("PRINT_ACTION", "${it.body()}") }
 		}
 	}
 	
+	fun getRealOutputFile(): String {
+		if (_viewerState.value.recentResult != null) {
+			return _viewerState.value.recentResult?.files?.find { it.contains("swapped_group.jpg") }.toString()
+		}
+		return ""
+	}
 }

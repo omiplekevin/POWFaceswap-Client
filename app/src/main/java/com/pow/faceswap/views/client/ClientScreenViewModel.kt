@@ -24,6 +24,20 @@ object ClientScreenViewModel : ViewModel() {
 	private val _clientState = MutableStateFlow(ClientScreenState())
 	val clientState: StateFlow<ClientScreenState> = _clientState.asStateFlow()
 	
+	fun resetState() {
+		_clientState.update { currentState ->
+			currentState.copy(
+				isLoading = false,
+				errMessage = null,
+				swapResponse = null,
+				capturedImagePath = null,
+				headCount = -1,
+				referenceFile = "",
+				serverFileTree = null,
+			)
+		}
+	}
+	
 	fun setHeadcount(headCount: Int) {
 		_clientState.update { currentState ->
 			currentState.copy(
@@ -57,21 +71,18 @@ object ClientScreenViewModel : ViewModel() {
 						currentState.copy(isLoading = true)
 					}
 				}
-				.onCompletion { 
-					_clientState.update { 
-						currentState -> 
+				.onCompletion {
+					_clientState.update { currentState ->
 						currentState.copy(isLoading = false)
 					}
 				}
-				.catch { 
-					_clientState.update { 
-						currentState -> 
+				.catch {
+					_clientState.update { currentState ->
 						currentState.copy(errMessage = it.message ?: "Uh oh! Something went wrong!")
 					}
 				}
-				.collect { 
-					_clientState.update { 
-						currentState -> 
+				.collect {
+					_clientState.update { currentState ->
 						currentState.copy(serverFileTree = it.body(), errMessage = null)
 					}
 				}
@@ -84,7 +95,7 @@ object ClientScreenViewModel : ViewModel() {
 				.flowOn(Dispatchers.IO)
 				.onStart {
 					_clientState.update { currentState ->
-						currentState.copy(isLoading = true)
+						currentState.copy(isLoading = true, swapResponse = null)
 					}
 				}
 				.onCompletion {

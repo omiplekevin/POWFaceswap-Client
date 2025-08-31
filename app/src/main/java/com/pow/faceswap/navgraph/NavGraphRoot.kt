@@ -9,7 +9,7 @@ import com.pow.faceswap.views.client.ClientGalleryView
 import com.pow.faceswap.views.client.ClientImagePreviewView
 import com.pow.faceswap.views.client.ClientScreen
 import com.pow.faceswap.views.selector.ScreenSelectorView
-import com.pow.faceswap.views.viewer.ViewerView
+import com.pow.faceswap.views.viewer.ViewerScreen
 
 sealed class RootScreens(val path: String) {
 	data object Root : RootScreens(path = "root")
@@ -53,6 +53,11 @@ fun NavGraphRoot(navGraphController: NavHostController) {
 		composable(route = RootScreens.ClientImagePreview.path) {
 			ClientImagePreviewView(
 				modifier = Modifier,
+				goToViewer = {
+					navGraphController.navigate(RootScreens.Viewer.path) {
+						popUpTo(RootScreens.Client.path)
+					}
+				},
 				navigateUp = {
 					navGraphController.popBackStack()
 				}
@@ -69,7 +74,7 @@ fun NavGraphRoot(navGraphController: NavHostController) {
 		}
 		
 		composable(route = RootScreens.Viewer.path) {
-			ViewerView(
+			ViewerScreen(
 				modifier = Modifier,
 				title = navGraphController.previousBackStackEntry?.savedStateHandle?.get<String>("title") ?: "",
 				navigateUp = {

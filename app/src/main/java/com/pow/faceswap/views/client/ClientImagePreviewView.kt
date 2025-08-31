@@ -16,6 +16,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -30,10 +31,16 @@ import java.io.File
 fun ClientImagePreviewView(
 	modifier: Modifier = Modifier,
 	viewModel: ClientScreenViewModel = viewModel(),
+	goToViewer: () -> Unit,
 	navigateUp: () -> Unit,
 ) {
 	val context = LocalContext.current
 	val clientState by viewModel.clientState.collectAsState()
+	
+	if (!clientState.isLoading && clientState.swapResponse != null) {
+		goToViewer()
+		viewModel.resetState()
+	}
 	
 	Scaffold { paddingValues ->
 		Column(
